@@ -51,4 +51,4 @@ USER mluser
 EXPOSE 8080
 
 # Entry point: uvicorn con puerto dinámico de Railway
-CMD ["sh", "-c", "uvicorn api_server:app --host 0.0.0.0 --port ${PORT}"]
+CMD sh -c 'uvicorn api_server:app --host 0.0.0.0 --port $PORT'
