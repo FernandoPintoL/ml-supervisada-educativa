@@ -22,18 +22,18 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
-# Agregar ml_educativas al path
-current_file = os.path.abspath(__file__)
-ml_educativas_dir = os.path.dirname(current_file)
-if ml_educativas_dir not in sys.path:
-    sys.path.insert(0, ml_educativas_dir)
+# Agregar directorio actual (supervisado) al path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
+# Importar desde módulos locales (relativos a supervisado)
 from shared.config import DEBUG, LOG_LEVEL, MODELS_DIR
-from supervisado.data.data_processor import DataProcessor
-from supervisado.models.performance_predictor import PerformancePredictor
-from supervisado.models.career_recommender import CareerRecommender
-from supervisado.models.trend_predictor import TrendPredictor, TREND_LABELS
-from supervisado.models.progress_analyzer import ProgressAnalyzer
+from data.data_processor import DataProcessor
+from models.performance_predictor import PerformancePredictor
+from models.career_recommender import CareerRecommender
+from models.trend_predictor import TrendPredictor, TREND_LABELS
+from models.progress_analyzer import ProgressAnalyzer
 from cache.cache_manager import get_cache_manager, load_cached_dataset
 from auth.sanctum_auth import (
     init_sanctum_auth,
@@ -41,13 +41,6 @@ from auth.sanctum_auth import (
     SanctumRoleValidator,
     token_cache,
 )
-
-# Agregar directorio del agente al path
-agente_dir = os.path.join(os.path.dirname(ml_educativas_dir), 'agente')
-if agente_dir not in sys.path:
-    sys.path.insert(0, agente_dir)
-
-from recommendation_agent import get_agent
 
 # Configurar logging
 logging.basicConfig(
