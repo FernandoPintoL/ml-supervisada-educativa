@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-11-25T15:48:41.967436",
+  "modelos": {
+    "Performance Predictor": true,
+    "Career Recommender": true,
+    "Trend Predictor": true,
+    "Progress Analyzer": true
+  },
+  "directorio": "D:\\PLATAFORMA EDUCATIVA\\supervisado\\trained_models"
+}

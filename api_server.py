@@ -945,10 +945,11 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.getenv('PORT', 8001))  # Railway: $PORT=8080, Local: 8001
     uvicorn.run(
         "api_server:app",
         host="0.0.0.0",
-        port=8001,
+        port=port,
         reload=DEBUG,
         log_level=LOG_LEVEL.lower()
     )

@@ -123,6 +123,103 @@ supervisado/
 
 ---
 
+## 🚀 INICIAR SERVIDOR FASTAPI (Servicio Separado)
+
+Este módulo incluye un **servidor FastAPI** independiente en el puerto **8001** (local) que sirve predicciones ML.
+
+### Opción 1: Iniciar directamente desde supervisado
+```bash
+cd D:\PLATAFORMA EDUCATIVA\supervisado
+python api_server.py
+```
+
+**Resultado esperado:**
+```
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+```
+
+### Opción 2: Usar uvicorn directamente
+```bash
+cd D:\PLATAFORMA EDUCATIVA\supervisado
+python -m uvicorn api_server:app --host 0.0.0.0 --port 8001 --reload
+```
+
+### Opción 3: Desde la raíz del proyecto
+```bash
+cd D:\PLATAFORMA EDUCATIVA
+python -m uvicorn supervisado.api_server:app --host 0.0.0.0 --port 8001 --reload
+```
+
+### Verificar que el servidor está corriendo
+```bash
+curl http://localhost:8001/health
+```
+
+**Respuesta esperada:**
+```json
+{
+    "status": "healthy",
+    "timestamp": "2025-11-25T...",
+    "models_loaded": 3
+}
+```
+
+### Acceder a la documentación interactiva
+- Swagger UI: http://localhost:8001/docs
+- ReDoc: http://localhost:8001/redoc
+
+---
+
+## 📡 CONFIGURACIÓN DE PUERTOS
+
+| Servicio | Puerto Local | Puerto Producción | Descripción |
+|----------|--------------|------------------|------------|
+| **Supervisado** (este) | 8001 | 8080 | Predicciones ML supervisionadas |
+| No Supervisado | 8002 | 8080 | Clustering y anomalías |
+| Agente | 8003 | 8080 | Síntesis LLM y recomendaciones |
+| Plataforma (Laravel) | 8000 | 8080 | Frontend y API principal |
+
+**Nota:** En producción (Railway), todos los servicios usan puerto 8080 con diferentes rutas.
+
+### Variables de entorno
+```env
+# En local
+PORT=8001           # Puerto para servicio supervisado
+
+# En producción (Railway)
+PORT=8080           # Railway automáticamente asigna este puerto
+RAILWAY_ENVIRONMENT=production  # Variable de Railway
+```
+
+---
+
+## 🔗 ENDPOINTS DISPONIBLES
+
+**Base URL:** `http://localhost:8001`
+
+```
+GET  /                          # Info del servidor
+GET  /health                    # Health check
+GET  /docs                      # Swagger UI
+GET  /redoc                     # ReDoc
+
+# Predicciones individuales
+POST /predict/risk              # Predicción de riesgo académico
+POST /predict/career            # Recomendación de carreras
+POST /predict/trend             # Predicción de tendencia
+POST /predict/progress          # Proyección de progreso
+
+# Predicciones en batch
+POST /predict/batch             # Múltiples predicciones
+
+# Cache management
+GET  /cache/info                # Info del caché
+POST /cache/refresh             # Refrescar caché
+POST /cache/clear               # Limpiar caché
+```
+
+---
+
 ## 🚀 PRIMEROS PASOS
 
 ### 1. Verificar dependencias instaladas

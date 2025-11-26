@@ -16,10 +16,11 @@ lightgbm>=4.0.0
 shap>=0.43.0
 lime>=0.2.0
 
-# API Framework
-fastapi>=0.104.1
-uvicorn>=0.24.0
-pydantic>=2.5.0
+# API Framework (versiones compatibles)
+fastapi==0.115.0
+uvicorn==0.31.0
+pydantic==2.8.2
+pydantic-settings==2.4.0
 
 # Database
 psycopg2-binary>=2.9.9
