@@ -63,6 +63,23 @@ class PredictionResponse(BaseModel):
     model_used: str
 
 
+class QuestionDifficultyRequest(BaseModel):
+    """Solicitud para predecir dificultad de pregunta"""
+    enunciado: str
+    tipo: str  # opcion_multiple, verdadero_falso, respuesta_corta
+    nivel_bloom: str  # remember, understand, apply, analyze, evaluate, create
+    curso_id: Optional[int] = None
+    longitud_opciones: Optional[int] = None
+
+
+class QuestionDifficultyResponse(BaseModel):
+    """Respuesta con predicción de dificultad"""
+    dificultad_predicha: float  # 0.0 - 1.0
+    confianza: float  # 0.0 - 1.0
+    clasificacion: str  # muy_facil, facil, media, dificil, muy_dificil
+    razonamiento: str  # Explicación breve
+
+
 class DBConnection:
     """Conexión a BD"""
 
@@ -340,6 +357,120 @@ async def predict_progress(request: PredictionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/predict/question-difficulty", response_model=QuestionDifficultyResponse, tags=["Predictions"])
+async def predict_question_difficulty(request: QuestionDifficultyRequest):
+    """
+    Predecir la dificultad de una pregunta educativa
+
+    Basado en:
+    - Complejidad del enunciado (longitud, palabras clave)
+    - Nivel Bloom
+    - Tipo de pregunta
+    - Contexto del curso (si se proporciona)
+
+    Retorna:
+    - dificultad_predicha: 0.0 (muy fácil) a 1.0 (muy difícil)
+    - confianza: 0.0 a 1.0
+    - clasificacion: categoría de dificultad
+    """
+
+    try:
+        # Extraer características del enunciado
+        longitud_enunciado = len(request.enunciado.strip())
+        num_palabras = len(request.enunciado.split())
+
+        # Mapear nivel Bloom a numérico (0-5)
+        bloom_mapping = {
+            'remember': 0,
+            'understand': 1,
+            'apply': 2,
+            'analyze': 3,
+            'evaluate': 4,
+            'create': 5
+        }
+        bloom_score = bloom_mapping.get(request.nivel_bloom.lower(), 2)
+
+        # Mapear tipo de pregunta a numérico
+        tipo_mapping = {
+            'verdadero_falso': 0,
+            'opcion_multiple': 1,
+            'respuesta_corta': 2,
+            'respuesta_larga': 3
+        }
+        tipo_score = tipo_mapping.get(request.tipo.lower(), 1)
+
+        # Calcular dificultad basada en características
+        # Fórmula: combinar Bloom (40%) + Longitud (30%) + Tipo (30%)
+
+        # Bloom contribuye directamente (0-1 scale: 5/5 = 1.0)
+        bloom_difficulty = bloom_score / 5.0
+
+        # Longitud: preguntas muy cortas o muy largas son más difíciles
+        # Óptimo: 50-150 caracteres
+        if longitud_enunciado < 20 or longitud_enunciado > 300:
+            longitud_difficulty = 0.8
+        elif longitud_enunciado < 50 or longitud_enunciado > 200:
+            longitud_difficulty = 0.6
+        else:
+            longitud_difficulty = 0.4
+
+        # Tipo: respuesta larga > respuesta corta > opción múltiple > V/F
+        tipo_difficulty = tipo_score / 3.0
+
+        # Combinar características
+        dificultad_predicha = (
+            bloom_difficulty * 0.40 +
+            longitud_difficulty * 0.30 +
+            tipo_difficulty * 0.30
+        )
+
+        # Limitar entre 0 y 1
+        dificultad_predicha = max(0.0, min(1.0, dificultad_predicha))
+
+        # Clasificar dificultad
+        if dificultad_predicha < 0.2:
+            clasificacion = "muy_facil"
+        elif dificultad_predicha < 0.4:
+            clasificacion = "facil"
+        elif dificultad_predicha < 0.6:
+            clasificacion = "media"
+        elif dificultad_predicha < 0.8:
+            clasificacion = "dificil"
+        else:
+            clasificacion = "muy_dificil"
+
+        # Generar razonamiento
+        razones = []
+        if bloom_score >= 4:
+            razones.append(f"Nivel Bloom alto ({request.nivel_bloom})")
+        if longitud_enunciado > 200:
+            razones.append("Enunciado extenso")
+        if tipo_score > 1:
+            razones.append(f"Tipo de pregunta requiere más análisis ({request.tipo})")
+
+        razonamiento = "; ".join(razones) if razones else "Dificultad promedio basada en características"
+
+        # Confianza basada en consistencia de características
+        confianza = 0.75 + (0.25 * abs(0.5 - dificultad_predicha))  # Mayor cuando está en extremos
+
+        logger.info(
+            f"[PREDICT] Dificultad Pregunta - "
+            f"Dificultad: {dificultad_predicha:.3f}, "
+            f"Clasificación: {clasificacion}"
+        )
+
+        return QuestionDifficultyResponse(
+            dificultad_predicha=round(dificultad_predicha, 3),
+            confianza=round(confianza, 3),
+            clasificacion=clasificacion,
+            razonamiento=razonamiento
+        )
+
+    except Exception as e:
+        logger.error(f"[ERROR] Predicción de dificultad fallida: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/", tags=["Info"])
 async def root():
     """Información del servidor"""
@@ -353,6 +484,7 @@ async def root():
             "career": "POST /predict/career",
             "trend": "POST /predict/trend",
             "progress": "POST /predict/progress",
+            "question_difficulty": "POST /predict/question-difficulty",
         },
         "documentation": {
             "swagger": "http://localhost:8001/docs",

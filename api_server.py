@@ -144,6 +144,34 @@ class RecommendationResponse(BaseModel):
 
 
 # ============================================================
+# VOCATIONAL SCHEMAS
+# ============================================================
+
+class VocationalFeaturesRequest(BaseModel):
+    """Features para predicción vocacional"""
+    student_id: int
+    promedio: float  # 0-100
+    asistencia: float  # 0-100
+    tasa_entrega: float  # 0-1
+    tendencia_score: float  # 0-1
+    recencia_score: float  # 0-1
+    area_dominante: float  # 0-100
+    num_areas_fuertes: int  # 0-6
+
+
+class VocationalCareerResponse(BaseModel):
+    """Respuesta de predicción vocacional de carrera"""
+    student_id: int
+    carrera: str
+    confianza: float  # 0-1
+    compatibilidad: float  # 0-1
+    top_3: List[Dict[str, Any]]  # Top 3 career recommendations
+    modelo_version: str
+    tiempo_procesamiento_ms: float
+    timestamp: str
+
+
+# ============================================================
 # FASTAPI APPLICATION
 # ============================================================
 
@@ -566,6 +594,113 @@ async def predict_career(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/predict/career/vocational", response_model=VocationalCareerResponse)
+async def predict_career_vocational(
+    features: VocationalFeaturesRequest,
+    token_data: Dict = Depends(verify_sanctum_token)
+):
+    """
+    Predicción de carrera vocacional basado en features específicos del test vocacional
+
+    Utiliza el modelo CareerRecommender entrenado con features normalizados
+    Retorna carrera principal + top 3 con confianza y compatibilidad
+
+    **Requiere:** Token válido de Sanctum
+    """
+    import time
+    start_time = time.time()
+
+    logger.info(f"Predicción vocacional de carrera solicitada (token: {token_data.get('token_id')})")
+
+    if 'career' not in model_manager.models:
+        raise HTTPException(status_code=503, detail="Career model not loaded")
+
+    try:
+        # Normalizar features vocacionales al rango esperado por el modelo
+        # El modelo espera features en rango 0-100 aproximadamente
+        # Convertir de features vocacionales a features académicas simuladas
+
+        # Mapear features vocacionales a features académicas
+        # promedio: usar directamente (0-100)
+        # asistencia: usar directamente (0-100)
+        # tasa_entrega: convertir a 0-100
+        # tendencia_score: convertir a 0-100
+        # recencia_score: convertir a 0-100
+        # area_dominante: usar directamente (0-100)
+        # num_areas_fuertes: escalar a 0-100
+
+        academic_features = StudentData(
+            student_id=features.student_id,
+            promedio_calificaciones=features.promedio / 10.0,  # Convertir de 0-100 a 0-10
+            varianza_calificaciones=features.area_dominante / 10.0,  # Usar área dominante como proxy
+            max_calificacion=10.0,
+            min_calificacion=features.promedio / 10.0 * 0.7,  # 70% del promedio
+            num_calificaciones=int(features.num_areas_fuertes * 3),  # Estimar # de calificaciones
+            num_trabajos=int(features.tasa_entrega * 10),  # Convertir tasa a # trabajos
+            promedio_intentos=features.recencia_score * 3,  # 0-3 intentos
+            dias_promedio_entrega=30 * (1 - features.tasa_entrega),  # Días de retraso estimados
+            promedio_consultas_material=features.asistencia / 20,  # Escalar asistencia
+            trabajos_entregados=int(features.tasa_entrega * 10),
+            trabajos_calificados=int(features.tasa_entrega * 10),
+        )
+
+        # Preparar features
+        X = model_manager.prepare_features(academic_features)
+
+        # Obtener predicción
+        predictions = model_manager.models['career'].predict(X)[0]
+        probabilities = model_manager.models['career'].predict_proba(X)[0]
+
+        # Obtener top 3
+        top_3_indices = np.argsort(probabilities)[-3:][::-1]
+
+        career_labels = {
+            0: 'Ingeniería en Sistemas',
+            1: 'Administración de Empresas',
+            2: 'Psicología',
+            3: 'Educación',
+            4: 'Medicina',
+            5: 'Derecho',
+            6: 'Contabilidad',
+            7: 'Ingeniería Civil',
+        }
+
+        top_3 = [
+            {
+                "ranking": rank + 1,
+                "carrera": career_labels.get(int(idx), f"Career {idx}"),
+                "confianza": float(probabilities[idx]),
+                "compatibilidad": float(probabilities[idx] * (features.area_dominante / 100.0))
+            }
+            for rank, idx in enumerate(top_3_indices)
+        ]
+
+        # Carrera principal es la primera en top 3
+        main_career = top_3[0] if top_3 else {
+            "ranking": 1,
+            "carrera": "No determinada",
+            "confianza": 0.0,
+            "compatibilidad": 0.0
+        }
+
+        processing_time = (time.time() - start_time) * 1000  # Convertir a ms
+
+        return VocationalCareerResponse(
+            student_id=features.student_id,
+            carrera=main_career["carrera"],
+            confianza=main_career["confianza"],
+            compatibilidad=main_career["compatibilidad"],
+            top_3=top_3,
+            modelo_version="1.0.0",
+            tiempo_procesamiento_ms=round(processing_time, 2),
+            timestamp=datetime.now().isoformat()
+        )
+
+    except Exception as e:
+        logger.error(f"Error en predict_career_vocational: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/predict/trend", response_model=TrendPredictionResponse)
 async def predict_trend(
     student_data: StudentData,
@@ -931,6 +1066,7 @@ async def root():
             "health": "/health",
             "predict_risk": "/predict/risk",
             "predict_career": "/predict/career",
+            "predict_career_vocational": "/predict/career/vocational",
             "predict_trend": "/predict/trend",
             "predict_progress": "/predict/progress",
             "predict_batch": "/predict/batch",
