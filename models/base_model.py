@@ -187,10 +187,25 @@ class BaseModel(ABC):
         try:
             data = joblib.load(filepath)
 
-            self.model = data['model']
-            self.features = data['features']
-            self.feature_importance = data.get('feature_importance', {})
-            self.metadata = data.get('metadata', {})
+            # Manejar tanto formato antiguo (solo modelo) como nuevo (diccionario)
+            if isinstance(data, dict):
+                # Formato nuevo: diccionario con modelo y metadata
+                self.model = data['model']
+                self.features = data['features']
+                self.feature_importance = data.get('feature_importance', {})
+                self.metadata = data.get('metadata', {})
+            else:
+                # Formato antiguo: solo el modelo directamente
+                self.model = data
+                self.features = []
+                self.feature_importance = {}
+                self.metadata = {
+                    'name': self.name,
+                    'model_type': self.model_type,
+                    'loaded_from': filepath,
+                    'loaded_at': datetime.now().isoformat()
+                }
+
             self.is_trained = True
 
             logger.info(f"✓ {self.name} cargado desde {filepath}")

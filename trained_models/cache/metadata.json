@@ -1,0 +1,50 @@
+{
+  "source": "test_data",
+  "description": "Dataset de prueba para cache",
+  "total_records": 100,
+  "features_count": 11,
+  "timestamp": "2025-11-28T14:17:27.951631",
+  "num_records": 100,
+  "num_features": 11,
+  "feature_names": [
+    "promedio_calificaciones",
+    "varianza_calificaciones",
+    "max_calificacion",
+    "min_calificacion",
+    "num_calificaciones",
+    "num_trabajos",
+    "promedio_intentos",
+    "dias_promedio_entrega",
+    "promedio_consultas_material",
+    "trabajos_entregados",
+    "trabajos_calificados"
+  ],
+  "columns": [
+    "student_id",
+    "promedio_calificaciones",
+    "varianza_calificaciones",
+    "max_calificacion",
+    "min_calificacion",
+    "num_calificaciones",
+    "num_trabajos",
+    "promedio_intentos",
+    "dias_promedio_entrega",
+    "promedio_consultas_material",
+    "trabajos_entregados",
+    "trabajos_calificados"
+  ],
+  "dtypes": {
+    "student_id": "int64",
+    "promedio_calificaciones": "float64",
+    "varianza_calificaciones": "float64",
+    "max_calificacion": "float64",
+    "min_calificacion": "float64",
+    "num_calificaciones": "int32",
+    "num_trabajos": "int32",
+    "promedio_intentos": "float64",
+    "dias_promedio_entrega": "float64",
+    "promedio_consultas_material": "float64",
+    "trabajos_entregados": "int32",
+    "trabajos_calificados": "int32"
+  }
+}
