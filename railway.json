@@ -7,18 +7,14 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "uvicorn api_server:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "uvicorn api_server:app --host 0.0.0.0 --port 8080",
     "restartPolicyType": "always",
     "restartPolicyMaxRetries": 3
   },
   "variables": {
     "ENVIRONMENT": "production",
     "DEBUG": "false",
-    "API_WORKERS": "4",
-    "LOG_LEVEL": "INFO",
-    "SERVICE_TYPE": "supervised",
-    "API_RELOAD": "false",
-    "USE_GPU": "false"
+    "LOG_LEVEL": "INFO"
   },
   "plugins": [
     {
@@ -26,13 +22,6 @@
       "config": {
         "name": "PostgreSQL",
         "description": "PostgreSQL database for ML Supervised models"
-      }
-    },
-    {
-      "source": "https://github.com/railwayapp/railway-plugin-redis.git",
-      "config": {
-        "name": "Redis",
-        "description": "Redis cache for supervised models"
       }
     }
   ]

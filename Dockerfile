@@ -1,5 +1,10 @@
 # =====================================================
-# Stage 1: Builder
+# Dockerfile para API Unificada ML - v2.0.0
+# Funciona en LOCAL (desarrollo) y RAILWAY (producción)
+# =====================================================
+
+# =====================================================
+# Stage 1: Builder (compilar dependencias)
 # =====================================================
 
 FROM python:3.11-slim AS builder
@@ -19,14 +24,15 @@ RUN pip install --upgrade pip && \
     pip install --user -r requirements.txt
 
 # =====================================================
-# Stage 2: Runtime
+# Stage 2: Runtime (imagen final)
 # =====================================================
 
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH=/home/mluser/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    PATH=/home/mluser/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    ENVIRONMENT=production
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
@@ -35,23 +41,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# Crear usuario no-root para seguridad
 RUN useradd -m -u 1000 mluser
 
+# Copiar dependencias desde builder
 COPY --from=builder /root/.local /home/mluser/.local
 RUN chown -R mluser:mluser /home/mluser/.local
 
+# Copiar código
 COPY --chown=mluser:mluser . .
 
-# Asegurar permisos correctos para mluser
-RUN chmod -R 755 /app && \
-    mkdir -p /app/trained_models /app/logs /app/__pycache__ && \
+# Crear directorios necesarios
+RUN mkdir -p /app/trained_models /app/logs && \
+    chmod -R 755 /app && \
     chmod -R 777 /app/trained_models /app/logs && \
-    chown -R mluser:mluser /app /home/mluser && \
-    chmod -R u+rwx /home/mluser && \
-    chmod -R g+rx /app && \
-    chmod -R o+rx /app
+    chown -R mluser:mluser /app /home/mluser
 
-# Health check
+# Health check (verifica que el servidor esté respondiendo)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
@@ -59,5 +65,8 @@ USER mluser
 
 EXPOSE 8080
 
-# Entry point: uvicorn en puerto 8080 para Railway
-CMD sh -c 'uvicorn api_server:app --host 0.0.0.0 --port 8080'
+# Ejecutar servidor unificado
+# - Puerto: 8080 (Railway automáticamente)
+# - Host: 0.0.0.0 (accesible desde fuera)
+# - Reload: false (producción no recarga)
+CMD ["uvicorn", "api_server:app", "--host", "0.0.0.0", "--port", "8080"]
