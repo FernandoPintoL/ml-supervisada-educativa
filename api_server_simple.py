@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
+from contextlib import asynccontextmanager
 
 import pandas as pd
 import psycopg2
@@ -60,7 +61,7 @@ class PredictionResponse(BaseModel):
     student_id: int
     prediction: float
     confidence: Optional[float] = None
-    model_used: str
+    model_name: str
 
 
 class QuestionDifficultyRequest(BaseModel):
@@ -234,7 +235,7 @@ async def predict_performance(request: PredictionRequest):
             student_id=request.student_id,
             prediction=prediction,
             confidence=0.95,  # Basado en R² del modelo
-            model_used="PerformancePredictor"
+            model_name="PerformancePredictor"
         )
 
     except Exception as e:
@@ -274,7 +275,7 @@ async def predict_career(request: PredictionRequest):
             student_id=request.student_id,
             prediction=float(prediction),
             confidence=1.0,  # Accuracy perfecta
-            model_used="CareerRecommender"
+            model_name="CareerRecommender"
         )
 
     except Exception as e:
@@ -314,7 +315,7 @@ async def predict_trend(request: PredictionRequest):
             student_id=request.student_id,
             prediction=float(prediction),
             confidence=0.90,
-            model_used="TrendPredictor"
+            model_name="TrendPredictor"
         )
 
     except Exception as e:
@@ -349,7 +350,7 @@ async def predict_progress(request: PredictionRequest):
             student_id=request.student_id,
             prediction=prediction,
             confidence=0.91,
-            model_used="ProgressAnalyzer"
+            model_name="ProgressAnalyzer"
         )
 
     except Exception as e:
