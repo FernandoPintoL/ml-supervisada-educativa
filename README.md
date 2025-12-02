@@ -332,6 +332,38 @@ Script optimizado para entrenamiento vía Pipeline:
 
 ---
 
+## 🔧 CONFIGURACIÓN CENTRALIZADA
+
+### config.py
+Archivo centralizado que detecta automáticamente:
+- **ENVIRONMENT:** `development` (local) o `production` (Railway)
+- **PORT:** 8001 (local) o 8080 (Railway automático)
+- **DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD**
+- **Features:** `ENABLE_AUTH`, `ENABLE_CACHE`, `ENABLE_AGENT`, `ENABLE_CORS`
+
+### Variables de Entorno
+```env
+# LOCAL (.env)
+ENVIRONMENT=development
+DEBUG=true
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=educativa
+DB_USERNAME=postgres
+DB_PASSWORD=1234
+
+# RAILWAY (Railway Console)
+ENVIRONMENT=production
+DEBUG=false
+DB_HOST=shortline.proxy.rlwy.net
+DB_PORT=10870
+DB_DATABASE=railway
+DB_USERNAME=postgres
+DB_PASSWORD=<tu-contraseña>
+```
+
+---
+
 ## 🔗 INTEGRACIÓN CON PLATAFORMA
 
 ### Pipeline ML Automático
@@ -442,7 +474,20 @@ DEEP_LEARNING ⏸️ (Futuro)
 
 **Status:** 🟢 COMPLETO Y FUNCIONAL
 **Versión:** 2.0
-**Última actualización:** 16 de Noviembre 2025
+**Última actualización:** 30 de Noviembre 2025
+
+---
+
+## 🔄 CAMBIOS RECIENTES (v2.0)
+
+- ✅ Unificación de servidores (api_server.py único)
+- ✅ Creación de `config.py` centralizado
+- ✅ Limpieza de `.env` con variables estándar `DB_*`
+- ✅ Dockerfile multi-stage optimizado
+- ✅ railway.json configurado correctamente
+- ✅ Puerto consistente: 8001 (LOCAL), 8080 (RAILWAY)
+
+---
 
 **Commits relacionados:**
 - 24f8cbb: Notificaciones en tiempo real con SSE
