@@ -1,0 +1,63 @@
+{
+  "timestamp": "2025-12-04T17:24:06.557294",
+  "tipo_validacion": "Temporal (Training vs Test por Fecha)",
+  "descripcion": "Validaci\u00f3n real: Modelos entrenados con datos hist\u00f3ricos, validados contra datos recientes",
+  "modelos_validados": [
+    "Performance Predictor",
+    "Career Recommender"
+  ],
+  "resultados": {
+    "Performance Predictor": {
+      "modelo": "Performance Predictor",
+      "tipo": "Regresi\u00f3n",
+      "algoritmo": "Random Forest",
+      "muestras_training": 76,
+      "muestras_test": 24,
+      "features": [
+        "desempe\u00f1o_promedio",
+        "asistencia_porcentaje",
+        "participacion_porcentaje",
+        "tareas_completadas",
+        "tareas_pendientes",
+        "actividad_hoy"
+      ],
+      "m\u00e9tricas": {
+        "R\u00b2 Score": 0.5651712284563778,
+        "RMSE": 13.01182421288207,
+        "MAE": 6.956727777777773,
+        "MSE": 169.30756934694412
+      },
+      "status": "EXITOSO",
+      "interpretaci\u00f3n": "\u26a0 ACEPTABLE - Modelo explica 50-70% de la varianza"
+    },
+    "Career Recommender": {
+      "modelo": "Career Recommender",
+      "tipo": "Clasificaci\u00f3n Binaria",
+      "algoritmo": "Random Forest",
+      "clases": [
+        "Bajo rendimiento (\u226470)",
+        "Alto rendimiento (>70)"
+      ],
+      "muestras_training": 76,
+      "muestras_test": 24,
+      "m\u00e9tricas": {
+        "Accuracy": 1.0,
+        "Precision": 1.0,
+        "Recall": 1.0,
+        "F1-Score": 1.0
+      },
+      "confusion_matrix": [
+        [
+          15,
+          0
+        ],
+        [
+          0,
+          9
+        ]
+      ],
+      "status": "EXITOSO",
+      "interpretaci\u00f3n": "\u2713 BUENO - Accuracy >75%"
+    }
+  }
+}
